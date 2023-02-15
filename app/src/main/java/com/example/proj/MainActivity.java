@@ -27,7 +27,8 @@ public class MainActivity extends Activity  {
 
     //Экземпляры классов наших кнопок
     Button redButton, greenButton, blueButton, whiteButton, onB, offB, noB,sendB;
-    int kol,onf;
+    int kol;
+    int onf=0;
     int[] marks = new int[4];
     int[] im = new int[]{R.id.im1, R.id.im2, R.id.im3, R.id.im4};
     //Сокет, с помощью которого мы будем отправлять данные на Arduino
@@ -182,12 +183,15 @@ public class MainActivity extends Activity  {
 
     public void onFinal(View v) {
         String send1=Integer.toString(onf);
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 4; i++) {
             send1+=Integer.toString(marks[i]);
         }
         Integer send2=Integer.parseInt(send1);
+        System.out.println(send2);
+        System.out.println("АБОБА");
         try {
             outStream.write(send2);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
