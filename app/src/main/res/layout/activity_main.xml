@@ -45,18 +45,10 @@
         android:id="@+id/button2"
         android:layout_width="153dp"
         android:layout_height="92dp"
+        android:onClick="onClick"
         android:text="выключить"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
-
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="94dp"
-        android:layout_height="150dp"
-        android:layout_marginEnd="156dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@android:drawable/stat_sys_data_bluetooth" />
 
     <Button
         android:id="@+id/button3"
@@ -143,5 +135,15 @@
         android:text="Отсутсвие цвета"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button10"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="88dp"
+        android:layout_marginBottom="112dp"
+        android:text="отправить цвета"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
