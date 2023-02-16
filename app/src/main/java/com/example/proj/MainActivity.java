@@ -27,8 +27,7 @@ public class MainActivity extends Activity  {
 
     //Экземпляры классов наших кнопок
     Button redButton, greenButton, blueButton, whiteButton, onB, offB, noB,sendB;
-    int kol;
-    int onf=2;
+    int kol,onf;
     int[] marks = new int[4];
     int[] im = new int[]{R.id.im1, R.id.im2, R.id.im3, R.id.im4};
     //Сокет, с помощью которого мы будем отправлять данные на Arduino
@@ -59,6 +58,46 @@ public class MainActivity extends Activity  {
         noB.setOnClickListener(this::onClickB);
         kol = 0;
 
+        String enableBT = BluetoothAdapter.ACTION_REQUEST_ENABLE;
+
+        startActivityForResult(new Intent(enableBT), 0);
+
+        //Мы хотим использовать тот bluetooth-адаптер, который задается по умолчанию
+        BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
+
+        //Пытаемся проделать эти действия
+        try {
+            //Устройство с данным адресом - наш Bluetooth Bee
+            //Адрес опредеяется следующим образом: установите соединение
+            //между ПК и модулем (пин: 1234), а затем посмотрите в настройках
+            //соединения адрес модуля. Скорее всего он будет аналогичным.
+            BluetoothDevice device = bluetooth.getRemoteDevice("00:19:08:00:10:52");
+
+            //Инициируем соединение с устройством
+            Method m = device.getClass().getMethod(
+                    "createRfcommSocket", new Class[]{int.class});
+
+            clientSocket = (BluetoothSocket) m.invoke(device, 1);
+            clientSocket.connect();
+            outStream = clientSocket.getOutputStream();
+
+            //В случае появления любых ошибок, выводим в лог сообщение
+        } catch (IOException e) {
+            Log.d("BLUETOOTH", e.getMessage());
+        } catch (SecurityException e) {
+            Log.d("BLUETOOTH", e.getMessage());
+        } catch (NoSuchMethodException e) {
+            Log.d("BLUETOOTH", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            Log.d("BLUETOOTH", e.getMessage());
+        } catch (IllegalAccessException e) {
+            Log.d("BLUETOOTH", e.getMessage());
+        } catch (InvocationTargetException e) {
+            Log.d("BLUETOOTH", e.getMessage());
+        }
+
+        //Выводим сообщение об успешном подключении
+        Toast.makeText(getApplicationContext(), "CONNECTED", Toast.LENGTH_LONG).show();
 
     }
 
@@ -68,6 +107,12 @@ public class MainActivity extends Activity  {
 
     public void onClickB(View v) {
 
+        //Пытаемся послать данные
+        //Получаем выходной поток для передачи данных
+
+
+
+        onf = 0;
         if (v == redButton) {
             marks[kol] = 2;
             ImageView ql = findViewById(im[kol]);
@@ -126,10 +171,10 @@ public class MainActivity extends Activity  {
         }
 
         if (v == onB) {
-            onf = 2;
+            onf = 1;
         }
         if (v == offB) {
-            onf =1;
+            onf = 0;
         }
 
 
@@ -137,72 +182,15 @@ public class MainActivity extends Activity  {
 
     public void onFinal(View v) {
         String send1=Integer.toString(onf);
-        for(int i=0;i<3;i+=2) {
-            if ((marks[i] == 2 && marks[i + 1] == 3) | (marks[i] == 3 && marks[i + 1] == 2)) {
-                send1 += "0";
-            }
-            if ((marks[i] == 2 && marks[i + 1] == 4) | (marks[i] == 4 && marks[i + 1] == 2)) {
-                send1 += "1";
-            }
-            if ((marks[i] == 2 && marks[i + 1] == 5) | (marks[i] == 5 && marks[i + 1] == 2)) {
-                send1 += "2";
-            }
-            if ((marks[i] == 3 && marks[i + 1] == 4) | (marks[i] == 4 && marks[i + 1] == 3)) {
-                send1 += "3";
-            }
-            if ((marks[i] == 3 && marks[i + 1] == 5) | (marks[i] == 5 && marks[i + 1] == 3)) {
-                send1 += "4";
-            }
-            if ((marks[i] == 4 && marks[i + 1] == 5) | (marks[i] == 5 && marks[i + 1] == 4)) {
-                send1 += "5";
-            }
+        for (int i = 0; i < 3; i++) {
+            send1+=Integer.toString(marks[i]);
         }
-        if ((marks[0] == marks[1]) ) {
-            send1 ="0";
-            send1+=Integer.toString(onf);
-            if ((marks[0] == 2 && marks[3] == 3) ) {
-                send1 += "0";
-            }
-            if ((marks[0] == 2 && marks[3] == 4)) {
-                send1 += "1";
-            }
-            if ((marks[0] == 2 && marks[3] == 5)) {
-                send1 += "2";
-            }
-            if ((marks[0] == 3 && marks[3] == 4)) {
-                send1 += "3";
-            }
-            if ((marks[0] == 3 && marks[3] == 5) ) {
-                send1 += "4";
-               }
-            if ((marks[0] == 4 && marks[3] == 5) ) {
-                send1 += "5";
-            }
-            if ((marks[0] == 3 && marks[3] == 2)) {
-                send1 += "6";
-            }
-            if ( (marks[0] == 4 && marks[3] == 2)) {
-                send1 += "7";
-            }
-            if ( (marks[0] == 5 && marks[3] == 2)) {
-                send1 += "8";
-            }
-            if ( (marks[0] == 4 && marks[3] == 3)) {
-                send1 += "9";
-            }
-            if ( (marks[0] == 5 && marks[3] == 3)) {
-                send1 ="0";
-                send1+=onf+2;
-                send1+=1;
-            }
-            if ( (marks[0] == 5 && marks[3] == 4)) {
-                send1 ="0";
-                send1+=onf+3;
-                send1+=1;
-            }
-
-
+        Integer send2=Integer.parseInt(send1);
+        try {
+            outStream.write(send2);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        System.out.println(send1);
+
     }
 }
