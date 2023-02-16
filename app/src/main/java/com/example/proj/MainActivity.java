@@ -79,7 +79,6 @@ public class MainActivity extends Activity  {
 
             clientSocket = (BluetoothSocket) m.invoke(device, 1);
             clientSocket.connect();
-            outStream = clientSocket.getOutputStream();
 
             //В случае появления любых ошибок, выводим в лог сообщение
         } catch (IOException e) {
@@ -182,13 +181,43 @@ public class MainActivity extends Activity  {
 
     public void onFinal(View v) {
         String send1=Integer.toString(onf);
-        if((marks[0]==2 && marks[1]==3) | (marks[0]==3 && marks[1]==2)){
-            send1+="0";
+        for(int i=0;i<3;i+=2) {
+            if ((marks[i] == 2 && marks[i + 1] == 3) | (marks[i] == 3 && marks[i + 1] == 2)) {
+                send1 += "0";
+            }
+            if ((marks[i] == 2 && marks[i + 1] == 4) | (marks[i] == 4 && marks[i + 1] == 2)) {
+                send1 += "1";
+            }
+            if ((marks[i] == 2 && marks[i + 1] == 5) | (marks[i] == 5 && marks[i + 1] == 2)) {
+                send1 += "2";
+            }
+            if ((marks[i] == 3 && marks[i + 1] == 4) | (marks[i] == 4 && marks[i + 1] == 3)) {
+                send1 += "3";
+            }
+            if ((marks[i] == 3 && marks[i + 1] == 5) | (marks[i] == 5 && marks[i + 1] == 3)) {
+                send1 += "4";
+            }
+            if ((marks[i] == 4 && marks[i + 1] == 5) | (marks[i] == 5 && marks[i + 1] == 4)) {
+                send1 += "5";
+            }
         }
-        if((marks[0]==2 && marks[1]==3) | (marks[0]==2 && marks[1]==3)){
-            send1+="0";
+        if ((marks[0] == marks[1])){
+            send1="";
+            send1+=Integer.toString(onf);
+            send1+=Integer.toString(marks[0]+4);
+            send1+=Integer.toString(marks[2]+4);
         }
-        Integer send2=Integer.parseInt(send1);
+        int send2=Integer.parseInt(send1);
+        Byte bt = (byte) send2;
+        try {
+            outStream = clientSocket.getOutputStream();
+            outStream.write(send2);
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println(send2);
 
 
     }
