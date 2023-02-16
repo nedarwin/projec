@@ -56,7 +56,7 @@ public class MainActivity extends Activity  {
         blueButton.setOnClickListener(this::onClickB);
         whiteButton.setOnClickListener(this::onClickB);
         noB.setOnClickListener(this::onClickB);
-        kol = 0;
+        kol = 2;
 
         String enableBT = BluetoothAdapter.ACTION_REQUEST_ENABLE;
 
@@ -182,15 +182,14 @@ public class MainActivity extends Activity  {
 
     public void onFinal(View v) {
         String send1=Integer.toString(onf);
-        for (int i = 0; i < 3; i++) {
-            send1+=Integer.toString(marks[i]);
+        if((marks[0]==2 && marks[1]==3) | (marks[0]==3 && marks[1]==2)){
+            send1+="0";
+        }
+        if((marks[0]==2 && marks[1]==3) | (marks[0]==2 && marks[1]==3)){
+            send1+="0";
         }
         Integer send2=Integer.parseInt(send1);
-        try {
-            outStream.write(send2);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
 
     }
 }
