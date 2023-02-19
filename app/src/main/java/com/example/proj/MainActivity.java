@@ -40,7 +40,7 @@ public class MainActivity extends Activity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         redButton = findViewById(R.id.button4);
-        noB = findViewById(R.id.button9);
+
         greenButton = findViewById(R.id.button3);
         blueButton = findViewById(R.id.button5);
         whiteButton = findViewById(R.id.button6);
@@ -55,8 +55,8 @@ public class MainActivity extends Activity  {
         greenButton.setOnClickListener(this::onClickB);
         blueButton.setOnClickListener(this::onClickB);
         whiteButton.setOnClickListener(this::onClickB);
-        noB.setOnClickListener(this::onClickB);
-        kol = 2;
+
+        kol = 0;
 
         String enableBT = BluetoothAdapter.ACTION_REQUEST_ENABLE;
 
@@ -119,7 +119,7 @@ public class MainActivity extends Activity  {
             if (kol < 3) {
                 kol += 1;
             } else {
-                kol = 1;
+                kol = 0;
             }
 
 
@@ -149,17 +149,6 @@ public class MainActivity extends Activity  {
         if (v == whiteButton) {
             marks[kol] = 5;
             ImageView ql = findViewById(im[kol]);
-            ql.setImageResource(R.drawable.white);
-            if (kol < 3) {
-                kol += 1;
-            } else {
-                kol = 0;
-            }
-
-        }
-        if (v == noB) {
-            marks[kol] = 6;
-            ImageView ql = findViewById(im[kol]);
             ql.setImageResource(R.drawable.black);
             if (kol < 3) {
                 kol += 1;
@@ -168,6 +157,7 @@ public class MainActivity extends Activity  {
             }
 
         }
+
 
         if (v == onB) {
             onf = 1;
