@@ -31,8 +31,8 @@ public class MainActivity extends Activity  {
     int[] marks = new int[4];
     int[] im = new int[]{R.id.im1, R.id.im2, R.id.im3, R.id.im4};
     //Сокет, с помощью которого мы будем отправлять данные на Arduino
-    BluetoothSocket clientSocket;
-    OutputStream outStream;
+    public BluetoothSocket clientSocket;
+
     //Эта функция запускается автоматически при запуске приложения
     @SuppressLint("MissingPermission")
     @Override
@@ -75,23 +75,16 @@ public class MainActivity extends Activity  {
 
             //Инициируем соединение с устройством
             Method m = device.getClass().getMethod(
-                    "createRfcommSocket", new Class[]{int.class});
+                    "createRfcommSocket", int.class);
 
             clientSocket = (BluetoothSocket) m.invoke(device, 1);
-            clientSocket.connect();
+            if (clientSocket != null) {
+                clientSocket.connect();
+            }
 
             //В случае появления любых ошибок, выводим в лог сообщение
-        } catch (IOException e) {
-            Log.d("BLUETOOTH", e.getMessage());
-        } catch (SecurityException e) {
-            Log.d("BLUETOOTH", e.getMessage());
-        } catch (NoSuchMethodException e) {
-            Log.d("BLUETOOTH", e.getMessage());
-        } catch (IllegalArgumentException e) {
-            Log.d("BLUETOOTH", e.getMessage());
-        } catch (IllegalAccessException e) {
-            Log.d("BLUETOOTH", e.getMessage());
-        } catch (InvocationTargetException e) {
+        } catch (IOException | SecurityException | NoSuchMethodException |
+                 IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
             Log.d("BLUETOOTH", e.getMessage());
         }
 
@@ -169,40 +162,44 @@ public class MainActivity extends Activity  {
 
     }
 
+
+int kowl=0;
     public void onFinal(View v) {
-        String send1=Integer.toString(onf);
+        kowl+=1;
+        StringBuilder send1= new StringBuilder(Integer.toString(onf));
         for(int i=0;i<3;i+=2) {
             if ((marks[i] == 2 && marks[i + 1] == 3) | (marks[i] == 3 && marks[i + 1] == 2)) {
-                send1 += "0";
+                send1.append("0");
             }
             if ((marks[i] == 2 && marks[i + 1] == 4) | (marks[i] == 4 && marks[i + 1] == 2)) {
-                send1 += "1";
+                send1.append("1");
             }
             if ((marks[i] == 2 && marks[i + 1] == 5) | (marks[i] == 5 && marks[i + 1] == 2)) {
-                send1 += "2";
+                send1.append("2");
             }
             if ((marks[i] == 3 && marks[i + 1] == 4) | (marks[i] == 4 && marks[i + 1] == 3)) {
-                send1 += "3";
+                send1.append("3");
             }
             if ((marks[i] == 3 && marks[i + 1] == 5) | (marks[i] == 5 && marks[i + 1] == 3)) {
-                send1 += "4";
+                send1.append("4");
             }
             if ((marks[i] == 4 && marks[i + 1] == 5) | (marks[i] == 5 && marks[i + 1] == 4)) {
-                send1 += "5";
+                send1.append("5");
             }
         }
         if ((marks[0] == marks[1])){
-            send1="";
-            send1+=Integer.toString(onf);
-            send1+=Integer.toString(marks[0]+4);
-            send1+=Integer.toString(marks[2]+4);
+            send1 = new StringBuilder();
+            send1.append(Integer.toString(onf));
+            send1.append(Integer.toString(marks[0] + 4));
+            send1.append(Integer.toString(marks[2] + 4));
         }
-        int send2=Integer.parseInt(send1);
+        int send2=Integer.parseInt(send1.toString());
         Byte bt = (byte) send2;
         try {
-            outStream = clientSocket.getOutputStream();
-            outStream.write(send2);
 
+            OutputStream outStream = clientSocket.getOutputStream();
+
+            outStream.write(send2);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -211,4 +208,7 @@ public class MainActivity extends Activity  {
 
 
     }
+
+
+
 }
