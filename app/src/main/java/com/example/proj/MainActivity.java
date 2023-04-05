@@ -155,21 +155,19 @@ public class MainActivity extends Activity {
     }
 
     public void connectt() {
-        try {
-            bluetooth = BluetoothAdapter.getDefaultAdapter();
-            if (bluetooth == null) {
-                // Устройство не поддерживает Bluetooth
-                Toast.makeText(this, "Bluetooth is not supported", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            device = bluetooth.getRemoteDevice(DEVICE_ADDRESS);
-            socket = device.createRfcommSocketToServiceRecord(SERVICE_UUID);
-            socket.connect();
+        thr = new Thread(() -> {
+            try {
+                bluetooth = BluetoothAdapter.getDefaultAdapter();
+                device = bluetooth.getRemoteDevice(DEVICE_ADDRESS);
+                socket = device.createRfcommSocketToServiceRecord(SERVICE_UUID);
+                socket.connect();
 
-            Log.d("BLUETOOTH", "Connected");
-        } catch (IOException e) {
-            Log.e("BLUETOOTH", "Error connecting to Bluetooth device", e);
-        }
+                Log.d("BLUETOOTH", "Connected");
+            } catch (IOException e) {
+                Log.e("BLUETOOTH", "Error connecting to Bluetooth device", e);
+            }
+        });
+        thr.start();
     }
 
     @Override
