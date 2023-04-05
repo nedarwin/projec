@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.UUID;
 
 import android.Manifest;
 import android.app.Activity;
@@ -18,20 +19,24 @@ import android.content.pm.PackageManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 
 public class MainActivity extends Activity  {
-
+    public Thread bluetoothThread;
     //Экземпляры классов наших кнопок
     Button redButton, greenButton, blueButton, whiteButton, onB, offB, noB,sendB;
     int kol,onf;
+    ImageButton btb ;
     int[] marks = new int[4];
+    public BluetoothAdapter bluetooth;
     int[] im = new int[]{R.id.im1, R.id.im2, R.id.im3, R.id.im4};
     //Сокет, с помощью которого мы будем отправлять данные на Arduino
     public BluetoothSocket clientSocket;
+
 
     //Эта функция запускается автоматически при запуске приложения
     @SuppressLint("MissingPermission")
@@ -40,7 +45,8 @@ public class MainActivity extends Activity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         redButton = findViewById(R.id.button4);
-
+        btb = findViewById(R.id.btb);
+        btb.setOnClickListener(this::OnReconnect);
         greenButton = findViewById(R.id.button3);
         blueButton = findViewById(R.id.button5);
         whiteButton = findViewById(R.id.button6);
@@ -63,33 +69,7 @@ public class MainActivity extends Activity  {
         startActivityForResult(new Intent(enableBT), 0);
 
         //Мы хотим использовать тот bluetooth-адаптер, который задается по умолчанию
-        BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
-
-        //Пытаемся проделать эти действия
-        try {
-            //Устройство с данным адресом - наш Bluetooth Bee
-            //Адрес опредеяется следующим образом: установите соединение
-            //между ПК и модулем (пин: 1234), а затем посмотрите в настройках
-            //соединения адрес модуля. Скорее всего он будет аналогичным.
-            BluetoothDevice device = bluetooth.getRemoteDevice("00:19:08:00:10:52");
-
-            //Инициируем соединение с устройством
-            Method m = device.getClass().getMethod(
-                    "createRfcommSocket", int.class);
-
-            clientSocket = (BluetoothSocket) m.invoke(device, 1);
-            if (clientSocket != null) {
-                clientSocket.connect();
-            }
-
-            //В случае появления любых ошибок, выводим в лог сообщение
-        } catch (IOException | SecurityException | NoSuchMethodException |
-                 IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-            Log.d("BLUETOOTH", e.getMessage());
-        }
-
-        //Выводим сообщение об успешном подключении
-        Toast.makeText(getApplicationContext(), "CONNECTED", Toast.LENGTH_LONG).show();
+        connectt();
 
     }
 
@@ -162,6 +142,18 @@ public class MainActivity extends Activity  {
 
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            if (clientSocket != null) {
+                clientSocket.close();
+
+            }
+        } catch (IOException e) {
+            Log.e("BLUETOOTH", "Error closing client socket", e);
+        }
+    }
 
 int kowl=0;
     public void onFinal(View v) {
@@ -195,18 +187,51 @@ int kowl=0;
         }
         int send2=Integer.parseInt(send1.toString());
         Byte bt = (byte) send2;
-        try {
-
-            OutputStream outStream = clientSocket.getOutputStream();
-
-            outStream.write(send2);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        sendData(bt);
         System.out.println(send2);
 
 
+    }
+
+
+
+
+
+    public void connectt() {
+        new Thread(() -> {
+            try {
+                BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
+                BluetoothDevice device = bluetooth.getRemoteDevice("00:19:08:00:10:52");
+                UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+                BluetoothSocket socket = device.createRfcommSocketToServiceRecord(MY_UUID);
+                socket.connect();
+                clientSocket = socket;
+
+                Log.d("BLUETOOTH", "Connected");
+            } catch (IOException e) {
+                Log.e("BLUETOOTH", "Error connecting to Bluetooth device", e);
+            }
+        }).start();
+    }
+
+    public void OnReconnect(View v) {
+
+    }
+
+    public void sendData(byte data) {
+        try {
+            if (clientSocket != null && clientSocket.isConnected()) {
+                OutputStream outputStream = clientSocket.getOutputStream();
+                outputStream.write(data);
+                outputStream.flush();
+                Log.d("BLUETOOTH", "Data sent: " + data);
+            } else {
+                Log.d("BLUETOOTH", "Bluetooth is not connected");
+            }
+        }
+        catch (IOException e) {
+            Log.d("BLUETOOTH", e.getMessage());
+        }
     }
 
 
