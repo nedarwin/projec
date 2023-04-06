@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -59,7 +60,14 @@ public class MainActivity extends Activity {
         kol = 0;
         String enableBT = BluetoothAdapter.ACTION_REQUEST_ENABLE;
         startActivityForResult(new Intent(enableBT), 0);
-
+        if(socket!=null){
+            try {
+                socket.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            socket=null;
+        }
         connectt();
     }
 
@@ -155,6 +163,10 @@ public class MainActivity extends Activity {
     }
 
     public void connectt() {
+        if (thr != null) {
+            thr.interrupt();
+            thr = null;
+        }
         thr = new Thread(() -> {
             try {
                 bluetooth = BluetoothAdapter.getDefaultAdapter();
@@ -165,10 +177,21 @@ public class MainActivity extends Activity {
                 Log.d("BLUETOOTH", "Connected");
             } catch (IOException e) {
                 Log.e("BLUETOOTH", "Error connecting to Bluetooth device", e);
+                try {
+                    if(socket!=null) {
+                        socket.close();
+                    }
+                } catch (IOException ex) {
+                    Log.e("BLUETOOTH", "Error closing client socket", ex);
+                }
+                socket = null;
+                // если Bluetooth не подключен, попробуйте подключиться
+                new Handler().postDelayed(this::connectt, 2000); // задержка в 2 секунды
             }
         });
         thr.start();
     }
+
 
     @Override
     protected void onPause() {
@@ -177,19 +200,21 @@ public class MainActivity extends Activity {
             thr.interrupt();
             thr = null;
         }
-        try {
-            if (socket != null) {
+        if (socket != null) {
+            try {
                 socket.close();
-                socket = null;
+            } catch (IOException e) {
+                Log.e("BLUETOOTH", "Error closing client socket", e);
             }
-        } catch (IOException e) {
-            Log.e("BLUETOOTH", "Error closing client socket", e);
+            socket = null;
         }
     }
 
+
     public void onReconnect(View v) {
         onPause(); // остановить поток и закрыть сокет
-        connectt(); // создать новый поток и подключиться к устройству
+        // создать новый поток и подключиться к устройству
+        new Handler().postDelayed(this::connectt, 2000); // задержка в 1 секунду
     }
 
     public void sendData(byte data) {
@@ -201,11 +226,11 @@ public class MainActivity extends Activity {
                 Log.d("BLUETOOTH", "Data sent: " + data);
             } else {
                 Log.d("BLUETOOTH", "Bluetooth is not connected");
-                connectt(); // если Bluetooth не подключен, попробуйте подключиться
+                onPause(); // остановить поток и закрыть сокет
+                connectt(); // создать новый поток и подключиться к устройству// если Bluetooth не подключен, попробуйте подключиться
             }
         } catch (IOException e) {
             Log.e("BLUETOOTH", "Error sending data over Bluetooth", e);
         }
     }
-
 }
