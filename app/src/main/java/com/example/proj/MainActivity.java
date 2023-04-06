@@ -8,6 +8,8 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -28,11 +30,11 @@ public class MainActivity extends Activity {
     private BluetoothSocket socket;
     int[] marks = new int[4];
     int[] im = new int[]{R.id.im1, R.id.im2, R.id.im3, R.id.im4};
-
+     public HandlerThread handlerThread;
 
     public Thread thr;
 
-    private static final String DEVICE_ADDRESS = "00:19:08:00:10:52";
+    private static final String DEVICE_ADDRESS = "98:D3:21:F7:95:24";
     private static final UUID SERVICE_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     @SuppressLint("MissingPermission")
@@ -163,17 +165,16 @@ public class MainActivity extends Activity {
     }
 
     public void connectt() {
-        if (thr != null) {
-            thr.interrupt();
-            thr = null;
-        }
-        thr = new Thread(() -> {
+        handlerThread = new HandlerThread("BluetoothHandlerThread");
+        handlerThread.start();
+
+        Handler handler = new Handler(handlerThread.getLooper());
+        handler.post(() -> {
             try {
                 bluetooth = BluetoothAdapter.getDefaultAdapter();
                 device = bluetooth.getRemoteDevice(DEVICE_ADDRESS);
                 socket = device.createRfcommSocketToServiceRecord(SERVICE_UUID);
                 socket.connect();
-
                 Log.d("BLUETOOTH", "Connected");
             } catch (IOException e) {
                 Log.e("BLUETOOTH", "Error connecting to Bluetooth device", e);
@@ -185,20 +186,18 @@ public class MainActivity extends Activity {
                     Log.e("BLUETOOTH", "Error closing client socket", ex);
                 }
                 socket = null;
-                // если Bluetooth не подключен, попробуйте подключиться
-                new Handler().postDelayed(this::connectt, 2000); // задержка в 2 секунды
+                // если Bluetooth не подключен, попробуйте подключиться через 2 секунды
+                new Handler(Looper.getMainLooper()).postDelayed(this::connectt, 2000);
             }
         });
-        thr.start();
     }
-
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (thr != null) {
-            thr.interrupt();
-            thr = null;
+        if (handlerThread != null) {
+            handlerThread.quit();
+            handlerThread = null;
         }
         if (socket != null) {
             try {
@@ -210,11 +209,35 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (handlerThread != null) {
+            handlerThread.quit();
+            handlerThread = null;
+        }
+        if (bluetooth != null) {
+            bluetooth.disable(); // отключить Bluetooth
+        }
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                Log.e("BLUETOOTH", "Error closing client socket", e);
+            }
+            socket = null;
+        }
+    }
 
-    public void onReconnect(View v) {
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        onDestroy();
+    }
+
+    protected void onReconnect(View v) {
         onPause(); // остановить поток и закрыть сокет
-        // создать новый поток и подключиться к устройству
-        new Handler().postDelayed(this::connectt, 2000); // задержка в 1 секунду
+        connectt();
     }
 
     public void sendData(byte data) {
@@ -226,8 +249,7 @@ public class MainActivity extends Activity {
                 Log.d("BLUETOOTH", "Data sent: " + data);
             } else {
                 Log.d("BLUETOOTH", "Bluetooth is not connected");
-                onPause(); // остановить поток и закрыть сокет
-                connectt(); // создать новый поток и подключиться к устройству// если Bluetooth не подключен, попробуйте подключиться
+
             }
         } catch (IOException e) {
             Log.e("BLUETOOTH", "Error sending data over Bluetooth", e);
