@@ -28,6 +28,8 @@ public class MainActivity extends Activity {
     private BluetoothAdapter bluetooth ;
     private BluetoothDevice device;
     private BluetoothSocket socket;
+
+    private Handler handler;
     int[] marks = new int[4];
     int[] im = new int[]{R.id.im1, R.id.im2, R.id.im3, R.id.im4};
      public HandlerThread handlerThread;
@@ -168,26 +170,32 @@ public class MainActivity extends Activity {
         handlerThread = new HandlerThread("BluetoothHandlerThread");
         handlerThread.start();
 
-        Handler handler = new Handler(handlerThread.getLooper());
-        handler.post(() -> {
-            try {
-                bluetooth = BluetoothAdapter.getDefaultAdapter();
-                device = bluetooth.getRemoteDevice(DEVICE_ADDRESS);
-                socket = device.createRfcommSocketToServiceRecord(SERVICE_UUID);
-                socket.connect();
-                Log.d("BLUETOOTH", "Connected");
-            } catch (IOException e) {
-                Log.e("BLUETOOTH", "Error connecting to Bluetooth device", e);
+        handler = new Handler(handlerThread.getLooper());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
                 try {
-                    if(socket!=null) {
-                        socket.close();
+                    bluetooth = BluetoothAdapter.getDefaultAdapter();
+                    if (bluetooth != null && !bluetooth.isEnabled()) {
+                        bluetooth.enable();
                     }
-                } catch (IOException ex) {
-                    Log.e("BLUETOOTH", "Error closing client socket", ex);
+                    device = bluetooth.getRemoteDevice(DEVICE_ADDRESS);
+                    socket = device.createRfcommSocketToServiceRecord(SERVICE_UUID);
+                    socket.connect();
+                    Log.d("BLUETOOTH", "Connected");
+                } catch (IOException e) {
+                    Log.e("BLUETOOTH", "Error connecting to Bluetooth device", e);
+                    try {
+                        if (socket != null) {
+                            socket.close();
+                        }
+                    } catch (IOException ex) {
+                        Log.e("BLUETOOTH", "Error closing client socket", ex);
+                    }
+                    socket = null;
+                    // если Bluetooth не подключен, попробуйте подключиться через 2 секунды
+                    handler.postDelayed(this, 2000);
                 }
-                socket = null;
-                // если Bluetooth не подключен, попробуйте подключиться через 2 секунды
-                new Handler(Looper.getMainLooper()).postDelayed(this::connectt, 2000);
             }
         });
     }
@@ -249,10 +257,13 @@ public class MainActivity extends Activity {
                 Log.d("BLUETOOTH", "Data sent: " + data);
             } else {
                 Log.d("BLUETOOTH", "Bluetooth is not connected");
-
+                connectt(); // переподключиться к Bluetooth-устройству
+                new Handler(Looper.getMainLooper()).postDelayed(() -> sendData(data), 2000); // повторить попытку отправки через 2 секунды
             }
         } catch (IOException e) {
             Log.e("BLUETOOTH", "Error sending data over Bluetooth", e);
+            connectt(); // переподключиться к Bluetooth-устройству
+            new Handler(Looper.getMainLooper()).postDelayed(() -> sendData(data), 2000); // повторить попытку отправки через 2 секунды
         }
     }
 }
