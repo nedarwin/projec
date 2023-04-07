@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -28,7 +29,7 @@ public class MainActivity extends Activity {
     private BluetoothAdapter bluetooth ;
     private BluetoothDevice device;
     private BluetoothSocket socket;
-
+    public TextView bl;
     private Handler handler;
     int[] marks = new int[4];
     int[] im = new int[]{R.id.im1, R.id.im2, R.id.im3, R.id.im4};
@@ -50,6 +51,7 @@ public class MainActivity extends Activity {
         blueButton = findViewById(R.id.button5);
         whiteButton = findViewById(R.id.button6);
         onB = findViewById(R.id.button);
+        bl=findViewById(R.id.bl);
         sendB = findViewById(R.id.button10);
         offB = findViewById(R.id.button2);
         btb.setOnClickListener(this::onReconnect);
@@ -183,8 +185,10 @@ public class MainActivity extends Activity {
                     socket = device.createRfcommSocketToServiceRecord(SERVICE_UUID);
                     socket.connect();
                     Log.d("BLUETOOTH", "Connected");
+                    bl.setText("CONNECTED");
                 } catch (IOException e) {
                     Log.e("BLUETOOTH", "Error connecting to Bluetooth device", e);
+                    bl.setText("NOT CONNECTED");
                     try {
                         if (socket != null) {
                             socket.close();
